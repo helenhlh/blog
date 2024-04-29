@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  
+  <title>Framework调试方式分析 | </title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta name="description" content="导读：不管是在Framework源码学习、分析的过程中，还是在Framework需求开发、Bug修复的过程中，开发者常常需要面对复杂的场景，跨越API层到Native层，或者不同进程间的跨进程分析，因此各种各样的调试方式发挥着非常大的作用。下文将对一些常用的调试方式进行介绍，包含IDE Debug、日志调试、Winscope及Perfetto。 IDE Debug：只能用于对JAVA层代码进行调">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Framework调试方式分析">
+<meta property="og:url" content="http://example.com/2022/04/28/framwork-debug-mode/index.html">
+<meta property="og:site_name">
+<meta property="og:description" content="导读：不管是在Framework源码学习、分析的过程中，还是在Framework需求开发、Bug修复的过程中，开发者常常需要面对复杂的场景，跨越API层到Native层，或者不同进程间的跨进程分析，因此各种各样的调试方式发挥着非常大的作用。下文将对一些常用的调试方式进行介绍，包含IDE Debug、日志调试、Winscope及Perfetto。 IDE Debug：只能用于对JAVA层代码进行调">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://example.com/images/idedebug-logo.jpg">
+<meta property="og:image" content="http://example.com/images/idedebug-breakpoint1.png">
+<meta property="og:image" content="http://example.com/images/idedebug-breakpoint2.png">
+<meta property="og:image" content="http://example.com/images/idedebug-logo.jpg">
+<meta property="og:image" content="http://example.com/images/idedebug-breakpoint3.png">
+<meta property="og:image" content="http://example.com/images/idedebug-breakpoint4.png">
+<meta property="og:image" content="http://example.com/images/idedebug-breakpoint5.png">
+<meta property="og:image" content="http://example.com/images/idedebug-breakpoint6.png">
+<meta property="og:image" content="http://example.com/images/idedebug-breakpoint7.png">
+<meta property="og:image" content="http://example.com/images/java-log-1.png">
+<meta property="og:image" content="http://example.com/images/java-log-2.png">
+<meta property="og:image" content="http://example.com/images/java-log-3.png">
+<meta property="og:image" content="http://example.com/images/java-log-4.png">
+<meta property="og:image" content="http://example.com/images/java-dump-1.png">
+<meta property="og:image" content="http://example.com/images/java-dump-2.png">
+<meta property="og:image" content="http://example.com/images/java-dump-3.png">
+<meta property="og:image" content="http://example.com/images/java-dump-4.png">
+<meta property="og:image" content="http://example.com/images/java-dump-5.png">
+<meta property="og:image" content="http://example.com/images/java-dump-6.png">
+<meta property="og:image" content="http://example.com/images/java-dump-7.png">
+<meta property="og:image" content="http://example.com/images/java-winscope-1.png">
+<meta property="og:image" content="http://example.com/images/java-winscope-2.png">
+<meta property="og:image" content="http://example.com/images/java-winscope-3.png">
+<meta property="og:image" content="http://example.com/images/java-winscope-4.png">
+<meta property="og:image" content="http://example.com/images/java-winscope-5.png">
+<meta property="og:image" content="http://example.com/images/java-winscope-6.png">
+<meta property="og:image" content="http://example.com/images/java-winscope-7.png">
+<meta property="og:image" content="http://example.com/images/java-perfetto-3.png">
+<meta property="og:image" content="http://example.com/images/java-perfetto-1.png">
+<meta property="og:image" content="http://example.com/images/java-perfetto-2.png">
+<meta property="og:image" content="http://example.com/images/java-perfetto-4.png">
+<meta property="og:image" content="http://example.com/images/java-perfetto-5.png">
+<meta property="og:image" content="http://example.com/images/java-perfetto-6.png">
+<meta property="og:image" content="http://example.com/images/java-perfetto-7.png">
+<meta property="article:published_time" content="2022-04-27T16:00:00.000Z">
+<meta property="article:modified_time" content="2024-04-29T17:00:41.368Z">
+<meta property="article:author" content="Helen">
+<meta property="article:tag" content="Framework">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://example.com/images/idedebug-logo.jpg">
+  
+  
+    <link rel="shortcut icon" href="/favicon.png">
+  
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+    
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.min.css">
+
+  
+  
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fork-awesome@1.2.0/css/fork-awesome.min.css">
+
+<meta name="generator" content="Hexo 7.2.0"></head>
+
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo"></a>
+      </h1>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"><span class="fa fa-bars"></span></a>
+        
+          <a class="main-nav-link" href="/">首页</a>
+        
+          <a class="main-nav-link" href="/archives">所有文章</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+        
+        <a class="nav-icon nav-search-btn" title="搜索"><span class="fa fa-search"></span></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="搜索"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="http://example.com"></form>
+      </div>
+    </div>
+  </div>
+</header>
+
+      <div class="outer">
+        <section id="main"><article id="post-framwork-debug-mode" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
+  <div class="article-meta">
+    <a href="/2022/04/28/framwork-debug-mode/" class="article-date">
+  <time class="dt-published" datetime="2022-04-27T16:00:00.000Z" itemprop="datePublished">2022-04-28</time>
+</a>
+    
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/%E7%BC%96%E7%A8%8B/">编程</a>►<a class="article-category-link" href="/categories/%E7%BC%96%E7%A8%8B/Android-Framework/">Android Framework</a>
+  </div>
+
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="p-name article-title" itemprop="headline name">
+      Framework调试方式分析
+    </h1>
+  
+
+      </header>
+    
+    <div class="e-content article-entry" itemprop="articleBody">
+      
+        <div style="background-color: #ecf3fa;padding: 15px;border-radius: 6px;margin-bottom:10px;margin-top:10px;line-height: 190%;">
+<span style="font-weight: bold;">导读：</span>不管是在Framework源码学习、分析的过程中，还是在Framework需求开发、Bug修复的过程中，开发者常常需要面对复杂的场景，跨越API层到Native层，或者不同进程间的跨进程分析，因此各种各样的调试方式发挥着非常大的作用。下文将对一些常用的调试方式进行介绍，包含<a href="#idedebug">IDE Debug</a>、<a href="#logdebug">日志调试</a>、<a href="#logwinscope">Winscope</a>及<a href="#logperfetto">Perfetto</a>。
+<br>IDE Debug：只能用于对JAVA层代码进行调试，直观且提供丰富的变量及对象的信息。
+<br>日志调试：常用logcat和dump2种方式，支持从JAVA层到Native层的代码调试，也支持但是分析难度较大，不够直观。
+<br>Winscope：用于窗口动画异常、闪屏、闪黑、黑屏、错位显示等瞬时 UI 问题，直观并且操作简便，但是需要系统支持。
+<br>Perfetto：用于性能检测和跟踪分析，是分析丢帧问题的重要工具。
+</div>
+
+
+<div id="idedebug" style="font-weight: bold;text-align: center;font-size: 22px;margin-bottom:10px;">IDE Debug
+</div>
+
+<div style="line-height: 190%;">
+<span style="font-weight: bold;">定义：</span>Android Studio IDE 提供了一个强大的Debug功能，它允许开发者在应用运行时检查和修改应用的行为。我们可以在Android Studio工具栏上找到对应的功能图标，如下图:
+</div>
+
+<p><img src="/images/idedebug-logo.jpg"></p>
+<div style="line-height: 190%;">
+<span style="font-weight: bold;">优点：</span>
+<br>1、直观清晰，IDE窗口呈现的函数调用栈一目了然，每个已执行断点的信息查看方便快捷。
+<br>2、信息量大，执行到每一个断点时所涉及的变量、对象及对象属性都可以直观地查看。
+<br>3、实时表达式计算，可以使用“Evaluate Expression”功能，在不修改代码的情况下，实时计算表达式的值。
+<br><span style="font-weight: bold;">缺点:</span>
+<br>1、只能对JAVA层的代码进行调试，无法调试Native层的代码，但是Framework层的存在着大量的JAVA层对Native层的调用，当JAVA层无法排查到问题时，就需要对Native层的代码进行调试和分析。
+<br>2、同一时间段内只能对一个进程进行调试，一旦涉及到跨进程调用，或者涉及到Android系统进程进行调试，IDE Debug就无法达到调试目的，因此就需要通过其他的调试手段进行调试。
+<br>3、IDE Debug会导致应用停留在断点处，因此无法进行代码执行效率、性能的相关分析。
+</div>
+<p>
+<div style="line-height: 190%;">
+<span style="font-weight: bold;">方法：</span>通常我们希望通过IDE Debug达到的调试目的有2种，一种是确认函数的调用栈，了解函数调用流程或者代码涉及的业务流程；另外一种是函数中分支执行和预期有偏差，可以通过debug工具查看执行到断点处时，所涉及的局部变量和对象的属性。IDE Debug的调试步骤分为<a href="#debug1">打断点</a>、<a href="#debug2">启动Debug</a>、<a href="#debug3">调试代码</a>。
+</div>
+
+<div id="debug1" style="line-height: 190%;">
+<span style="font-weight: bold;">1、打断点：</span>找到目标代码行，在Android Studio中的行号后面点击鼠标，就会出现红色的符号。
+
+<p><img src="/images/idedebug-breakpoint1.png"><br><img src="/images/idedebug-breakpoint2.png"></p>
+</div>
+
+<div id="debug2" style="line-height: 190%;">
+<span style="font-weight: bold;">2、启动Debug：</span>在Android Studio工具栏上找到对应的功能图标，点击后进入Debug模式，触发程序流程执行到断点处代码。
+
+<p><img src="/images/idedebug-logo.jpg"></p>
+</div>
+
+<div id="debug3" style="line-height: 190%;">
+<span style="font-weight: bold;">3、调试代码：</span>进入断点调试模式后，可以点击IDE调出Debug调试面板，查看执行到断点处时所涉及的对象及属性值，也可以通过计算表达式对变量表达式进行计算。
+
+<p><img src="/images/idedebug-breakpoint3.png"><br><img src="/images/idedebug-breakpoint4.png"><br><img src="/images/idedebug-breakpoint5.png"><br><img src="/images/idedebug-breakpoint6.png"><br><img src="/images/idedebug-breakpoint7.png"></p>
+</div>
+
+<div id="logdebug" style="font-weight: bold;text-align: center;font-size: 22px;margin-bottom:10px;">日志调试
+</div>
+<div style="line-height: 190%;">
+<span style="font-weight: bold;">定义：</span>在Android Framework层进行日志调试是一种常见的做法，它可以帮助开发者了解系统服务和核心组件的运行情况。Android系统提供了logcat和dump2种日志缓存机制，提供了丰富的日志打印工具类，支撑从JAVA层到Native层的进行日志打印。
+<br>支持写入logcat缓存文件的日志工具类包含JAVA层的Log类、SLog类、EventLog类、RLog类、ProtoLog类（Android11开始引入），Native层的cutils包下的的log相关函数。
+<br>支持写入dump缓存的日志工具类是PrintWriter类。
+</div>
+<p>
+
+<div style="line-height: 190%;">
+<span style="font-weight: bold;">优点：</span>
+<br>1、跨层调试，开发者可以根据实际的需求，同时在JAVA层、Native层进行日志打印，最终可以从应用到底层进行追踪。
+<br>2、跨进程调试，需要对跨进程调用的流程进行分析时，日志调试可以把各个进程间的调用流程呈现出来。
+<br>3、灵活便捷，配合各种工具可以对日志进行过滤，只保留某个模块的日志，有利于降低问题分析难度。
+<br><span style="font-weight: bold;">缺点:</span>
+<br>1、日志的内容不直观，对开发人员来说有一定的挑战。
+<br>2、日志添加后需要重新编译对应模块并导入到系统中，比较繁琐。
+</div>
+<p>
+<span style="font-weight: bold;">方法：</span>包含<a href="#log-logcat">logcat日志</a>及<a href="#log-dump">dump日志</a>2种机制的使用方法。
+
+<div id="log-logcat" style="line-height: 190%;">
+<span style="font-weight: bold;">1、logcat日志：</span>logcat的日志打印类，包含JAVA层的Log类、SLog类、EventLog类、RLog类和ProtoLog类，以及Native层的cutils包下的log相关函数。logcat日志中被分成了5个日志缓冲区，分别是main（应用日志）、system（系统组件日志）、events（input事件日志）、radio（通信模块日志）以及crash。
+<br>使用adb logcat命令导出日志时，通过-b参数指定缓冲区，在默认情况下打印main、system、crash3个缓冲区日志，-b all则指定所有缓冲区的日志。
+</div>
+
+<div style="line-height: 190%;text-indent: 2em;">
+<span style="color: #cd8f4d;">&#10148;&nbsp;</span><span style="font-weight: bold;">日志添加：</span>可以根据实际的需要，对变量、对象或者调用堆栈进行打印，重新编译运行对应代码后就可以进入下一步日志查看。
+<br>下图中以Log类调用为例，JAVA层的SLog类、EventLog类和RLog类以及Native层的Log类调用方式一样，唯一的区别就是Native层调用log函数需要引入"cutils/log.h"头文件，并且在编译时要连接到libutil库。<br>Native层log头文件提供LOGV、LOGD、LOGI、LOGW、LOGE等宏用来写入main缓冲区的日志，SLOGV、SLOGD、SLOGI、SLOGW、SLOGE等宏用来写入system缓冲区的日志，LOG_EVENT_INT、LOG_EVENT_LONG、LOG_EVENT_FLOAT、LOG_EVENT_STRING等宏用来写入event缓冲区的日志。
+<br>ProtoLog类的日志默认关闭，可以通过adb shell wm logging enable-text [tagname]来打开。
+
+<p><img src="/images/java-log-1.png"></p>
+<p><span style="color: #cd8f4d;">&#10148;&nbsp;</span><span style="font-weight: bold;">日志查看：</span>Log日志有2种查看方式，一种是通过IDE的Logcat面板进行查看main日志缓冲区的日志，面板上可以选择查看日志的进程，也可以筛选日志关键字；一种是通过adb logcat命令导出日志缓冲区日志到文件中，到操作系统用户目录下查找对应的日志。
+    <br>
+    <br><span style="font-weight: bold;">补充：</span>adb logcat命令常用参数包括以下4种
+    <br><span style="color: #cd8f4d;">&#10022;</span> -b：指定日志缓冲区，可指定main，system，events，radio，crash，all。
+    <br><span style="color: #cd8f4d;">&#10022;</span> -c：清除当前的日志缓冲区
+    <br><span style="color: #cd8f4d;">&#10022;</span> -s <tag>：设置过滤选项
+    <br><span style="color: #cd8f4d;">&#10022;</span> -t <time>：显示最近的 <time> 毫秒内的日志
+    <br><span style="color: #cd8f4d;">&#10022;</span> -v <format>：设置日志的输出格式。可用的格式包括：
+        <br>&nbsp;&nbsp;&nbsp;&nbsp;brief：默认格式，显示优先级/标签和进程PID。
+        <br>&nbsp;&nbsp;&nbsp;&nbsp;process：只显示进程PID。
+        <br>&nbsp;&nbsp;&nbsp;&nbsp;tag：只显示优先级/标签。
+        <br>&nbsp;&nbsp;&nbsp;&nbsp;thread：显示进程:线程和优先级/标签。
+        <br>&nbsp;&nbsp;&nbsp;&nbsp;raw：显示原始日志消息，无其他元数据。
+        <br>&nbsp;&nbsp;&nbsp;&nbsp;time：显示日期、时间、优先级/标签和进程PID。
+        <br>&nbsp;&nbsp;&nbsp;&nbsp;threadtime：显示日期、时间、优先级、标签和PID TID线程。
+        <br>&nbsp;&nbsp;&nbsp;&nbsp;long：显示所有元数据字段，并用空行分隔消息。
+
+<p><img src="/images/java-log-2.png"><br><img src="/images/java-log-3.png"><br><img src="/images/java-log-4.png"></p>
+</div>
+
+<div id="log-dump" style="line-height: 190%;">
+<span style="font-weight: bold;">2、dump日志：</span>dump日志主要是用来呈现系统服务的相关日志，包括SystemServer中注册的服务以及servicemanager中注册的服务（如SurfaceFlinger），因此系统服务的dump日志分析对系统服务的问题解决有着非常重要的作用。开发者也可以根据实际的需求，在dump日志中加入自己的日志打印。下面将从<a href="#log-dump1">日志添加</a>、<a href="#log-dump2">日志查看</a>以及<a href="#log-dump3">重要服务的日志关键字</a>3个方面进行介绍。
+</div>
+
+<div id="log-dump1" style="line-height: 190%;text-indent: 2em;">
+<span style="color: #cd8f4d;">&#10148;&nbsp;</span><span style="font-weight: bold;">日志添加：</span>系统服务都会实现一个dump的函数，因此可以在目标服务的dump函数中进行JAVA层或Native层的日志添加。下图是AMS模块JAVA层的dump函数，以及SurfaceFlinger的Native层的dump函数：
+
+<p><img src="/images/java-dump-1.png"><br><img src="/images/java-dump-2.png"></p>
+</div>
+
+<div id="log-dump2" style="line-height: 190%;text-indent: 2em;">
+<p><span style="color: #cd8f4d;">&#10148;&nbsp;</span><span style="font-weight: bold;">日志查看：</span>JAVA层和Native层的dump日志都是通过adb shell dumpsys [servicename] [param] > [filepath] 命令导出到指定的目录，然后到对应目录查看日志文件。dumpsys命令中参数的含义如下：
+    <br>&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #cd8f4d;">&#10022;</span> [servicename]：SystemServer管理的服务可以在android/content/Context.java类中，有@see #getSystemService注解的常量都是servicename，需要dump哪个服务可以直接在Context.java类里面查找。Native层的服务目前主要包含InstalldNativeService、BpBinder、SurfaceFlinger、SensorService、InputFlinger。
+    <br>&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #cd8f4d;">&#10022;</span> [param]：系统服务在dump时支持的过滤参数，这个需要到实现dump方法的类去查看，默认情况下打印服务的所有dump日志。
+    <br>&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #cd8f4d;">&#10022;</span> [filepath]：dump日志在本地系统的存储目录
+</div>
+
+<div id="log-dump3" style="line-height: 190%;text-indent: 2em;">
+<p><span style="color: #cd8f4d;">&#10148;&nbsp;</span><span style="font-weight: bold;">重要服务的日志分析关键字：</span>
+    <br>&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #cd8f4d;">&#10022;</span> SurfaceFlinger：在导出的日志中查找关键字“HWC layers”，确认HWC窗口层级，关注焦点图层【focused】、位置【Disp Frame (LTRB)】、大小【Source Crop (LTRB)】、旋转角度【 Frame Rate 】等属性，焦点图层【focused】中有星号的表示有焦点图层。
+    <br>&nbsp;&nbsp;&nbsp;&nbsp;查找关键字“BufferStateLayer”，确认当前绘图窗口，查看窗口对应的属性activeBuffer，如果activeBuffer=[ 0x 0: 0,Unknown/None]，则表示未完成绘图；color属性最后一个参数表示alpha，如果该参数为0，该图层也是不会显示的；flag属性在2进制状态的末位bit表示可见性，1表示不可见，0表示可见。
+
+<p><img src="/images/java-dump-3.png"><br><img src="/images/java-dump-4.png"><br>    &nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #cd8f4d;">&#10022;</span> window：在导出的日志中，查找关键字“Window #”，找到目标的窗口信息。<br>mDrawState&#x3D;HAS_DRAWN，mDrawState为窗口的绘制状态，HAS_DRAWN表示WMS已经完成该窗口的显示流程，其中NO_SURFACE、DRAW_PENDING这两个状态表示应用端没有完成对应的surface申请和绘制，此类问题需要应用端查看；COMMIT_DRAW_PENDING、READY_TO_SHOW，表示应用端已经完成绘制并上报状态给WMS，则需要WMS查看显示控制流程。<br>&nbsp;&nbsp;&nbsp;&nbsp;isOnScreen&#x3D;true表示显示到屏幕上，isVisible&#x3D;true窗口可见。</p>
+<p><img src="/images/java-dump-5.png"><br>    &nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #cd8f4d;">&#10022;</span> activity：dumpsys activity activities，在导出的日志中查找关键字“Display #”，找到目标屏幕的activity列表信息，activity列表从top到bottom排序，包含属于应用名称、启动源、启动Intent等。确认目标acitivity的窗口是否正常绘制，主要看信息mNumInterestingWindows&#x3D;1 mNumDrawnWindows&#x3D;1 allDrawn&#x3D;true，mNumInterestingWindows表示需要绘图的窗口数目，mNumDrawnWindows表示已经完成绘图的窗口数目，都为1表示已经完成绘图。另外还可以从activities的日志中，分析Keyguard、InsetsState、Display areas z order等信息。<br>&nbsp;&nbsp;&nbsp;&nbsp;dumpsys activity top，在导出的日志中查找关键字“View Hierarchy:”，查看目标activity的View控件层级树。<br>&nbsp;&nbsp;&nbsp;&nbsp;dumpsys activity containers，在导出的日志中查找关键字“Root ”，查看窗口层级树。</p>
+<p><img src="/images/java-dump-6.png"><br>    &nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #cd8f4d;">&#10022;</span> input：在导出的日志中查找关键字“Event Hub”，查看预期输入设备的信息。<br>&nbsp;&nbsp;&nbsp;&nbsp;查找关键字“InputReader”，查看各输入设备的配置信息，以及最近发生的状态变化相关信息，如按下按键或触摸触摸屏等操作。<br>&nbsp;&nbsp;&nbsp;&nbsp;查找关键字“InputDispatcher”，查看事件派发信息，包括哪个窗口被触摸、输入队列的状态以及是否存在 ANR 等。</p>
+<p><img src="/images/java-dump-7.png"></p>
+</div>
+
+<div id="logwinscope" style="font-weight: bold;text-align: center;font-size: 22px;margin-bottom:10px;">Winscope
+</div>
+<div style="line-height: 190%;">
+<span style="font-weight: bold;">定义：</span>是一个用于分析 Android 系统中窗口和显示问题的工具,记录了窗口变化期内窗口的属性及绘制状态，并提供可视化的工具，让开发者能够直观地跟踪整个界面的变化过程，在解决窗口动画异常、闪屏、闪黑、黑屏、错位显示等瞬时 UI 问题时有种非常重要的作用。
+</div>
+<p>
+
+<div style="line-height: 190%;">
+<span style="font-weight: bold;">优点：</span>直观简便，可以在 Chrome 浏览器中打开中抓取的 Winscope 文件，可以一帧帧地查看每个窗口变化期，操作简便，呈现的内容直观清晰。
+<br><span style="font-weight: bold;">缺点:</span>涉及到多个模块引起的复杂问题时，常常需要配合其他模块的日志进行分析，例如Input、AMS等模块。另外设备终端必须要支持Winscope设置的功能才能使用。
+</div>
+<p>
+<span style="font-weight: bold;">方法：</span>包含开启Winscope功能、Winscope日志抓取、Winscope日志分析3个步骤。
+
+<div style="line-height: 190%;">
+<span style="font-weight: bold;">1、开启Winscope功能：</span>打开设备的系统设置功能，进入开发者选项，点击快捷设置开发者图块，然后选择Winscope跟踪。
+</div>
+
+<p><img src="/images/java-winscope-1.png"></p>
+<div style="line-height: 190%;">
+<span style="font-weight: bold;">2、Winscope日志抓取：</span>在开启Winscope功能后，状态栏就会多出一个Winscope跟踪的开关，点击这个开关就已经开始了Winscope日志抓取，然后复现对应的bug现象，复现完毕则再点击图标关闭。
+<br>日志抓取完毕后，会在设备的/data/misc/wmtrace的路径下生成.winscope文件。
+</div>
+
+<p><img src="/images/java-winscope-2.png"><br><img src="/images/java-winscope-3.png"></p>
+<div style="line-height: 190%;">
+<span style="font-weight: bold;">3、Winscope日志分析：</span>在开始分析之前，需要先把手机上的winscope抓取的文件pull到本地。
+<br>在chrome浏览器中，打开配套源码aosp中winscope的html文件 <span style="color: red;">[/home/test/aosp/prebuilts/misc/common/winscope/winscope.html]</span>。
+<br>然后点击html中的open files功能，打开winscope文件路径，选择常用的SurfaceFlinger和Window相关文件进行分析。
+<br>完成导入后，就可以对着录屏的每一帧图像看对应的surfaceflinger中各个layer的信息，相当于每一帧我们都可以有对应的dumpsys数据分析。
+
+<p><img src="/images/java-winscope-4.png"><br><img src="/images/java-winscope-5.png"><br><img src="/images/java-winscope-6.png"><br><img src="/images/java-winscope-7.png"></p>
+</div>
+
+<div id="logwinscope" style="font-weight: bold;text-align: center;font-size: 22px;margin-bottom:10px;">Perfetto
+</div>
+<div style="line-height: 190%;">
+<span style="font-weight: bold;">定义：</span>是 Android10 引入的性能检测和跟踪分析工具，提供了记录系统级和应用级的trace文件，以及一个基于Web的可视化呈现界面 —— Perfetto UI。Perfetto提供了查询、置顶、标记等功能，大大提升了分析效率，并且能够直观地看到进程和线程中函数的执行时间、调用流程、跨进程的调用等，是分析丢帧问题的重要工具。
+</div>
+<p>
+
+<div style="line-height: 190%;">
+<span style="font-weight: bold;">优点：</span>直观简便，可以在 Chrome 浏览器中分析工具页面，就可以看到在trace抓取期间的所有进程和线程的执行状态、调用的函数等。
+<br><span style="font-weight: bold;">缺点:</span>如果想在Perfetto中增加函数显示，需要调用Trace接口进行添加，然后重新编译对应模块并导入到系统中。
+</div>
+<p>
+<span style="font-weight: bold;">方法：</span>包含<a href="#log-perfetto1">trace添加</a>、<a href="#log-perfetto2">trace抓取</a>、<a href="#log-perfetto3">Perfetto分析</a>3个步骤。
+
+<div id="log-perfetto1" style="line-height: 190%;">
+<span style="font-weight: bold;">1、trace添加：</span>开发者可以根据实际需要，在目标代码种添加trace跟踪，以便进行问题分析。
+<br>JAVA层添加trace：开启Trace跟踪调用android.os.Trace.traceBegin(Trace.TRACE_TAG_ALWAYS, "my_event")，停止Trace跟踪调用android.os.Trace.traceEnd(Trace.TRACE_TAG_ALWAYS, "my_event"),2个参数根据实际需要进行修改。
+<br>Native层添加trace：开发时引入相关的头文件#include <utils/Trace.h>，编译时引入libutils相关库。
+<br>定义好相关的TAG，#undef ATRACE_TAG #define ATRACE_TAG ATRACE_TAG_GRAPHICS。
+<br>第一种方式，调用相关actrace方法ATRACE_CALL或者ATRACE_NAME，这2个函数跟踪的作用域都是函数的作用域，区别是ATRACE_CALL默认追踪的是函数名，ATRACE_NAME是自定义名。另外一种方式，调用ATRACE_BEGIN(name)和ATRACE_END()，这种方式跟踪的作用域是这2个函数之间，相对于前面那种方式控制更加灵活。
+<br>如果想要Trace上的显示的标签是动态变化的，比如打印一个数字，或者是某个变量的值，可以调用gui/TraceUtils.h的ATRACE_FORMAT函数。
+<br>ATRACE_FORMAT("%s %" PRId64 " vsyncIn %.2fms%s", __func__, vsyncId, vsyncIn,
+                  mExpectedPresentTime == expectedVsyncTime ? "" : " (adjusted)");
+
+</div>
+
+<div id="log-perfetto2" style="line-height: 190%;">
+<p><span style="font-weight: bold;">2、trace抓取：</span>通过adb命令抓取trace，并通过命令adb pull /data/misc/perfetto-traces/trace_file.perfetto-trace，从设备pull到本地系统中。
+<p><span style="color: #cd8f4d;">&#10148;&nbsp;</span>perfetto离线抓取，adb shell perfetto -o /data/misc/perfetto-traces/trace_file.perfetto-trace -t 10s sched freq idle am wm gfx view binder_driver hal dalvik camera input res memory
+<p><span style="color: #cd8f4d;">&#10148;&nbsp;</span>手机版本不支持perfetto，可以离线抓取atrace。开始抓取，adb shell "atrace -c  -t 10 sched freq idle am wm gfx view binder_driver hal dalvik camera input res gfx view wm am ss video camera hal res sync idle binder_driver binder_lock ss  --async_start"。停止抓取，adb shell atrace --async_stop -z -c -o /sdcard/atrace_normal.atrace。
+<p><span style="color: #cd8f4d;">&#10148;&nbsp;</span>使用源码的中自带的record_android_trace工具抓取，Linux系统终端上切换到aosp/external/perfetto/tools路径，输入命令。这种方式抓取完成后会自动打开chrome的浏览器。
+</div>
+
+<div style="background-color: #ecf3fa;padding:10px;margin-bottom:15px;">javatest@test:~/aosp/external/perfetto/tools$ ./record_android_trace -o $(date +%Y%m%d_%H%M%S)_trace_file.perfetto-trace -t 5s -b 32mb sched freq idle am wm gfx view binder_driver hal dalvik camera input res memory gfx view wm am ss video camera hal res sync idle binder_driver binder_lock ss
+Running perfetto --background --txt -o /data/misc/perfetto-traces/2023-10-01_13-06-0d9a0e.pftrace -t 5s -b 32mb sched freq idle am wm gfx view binder_driver hal dalvik camera input res memory gfx view wm am ss video camera hal res sync idle binder_driver binder_lock ss
+</div>
+
+
+
+<div id="log-perfetto3" style="line-height: 190%;">
+<span style="font-weight: bold;">3、Perfetto分析：</span>下文将从Perfetto的<a href="#log-perfetto31">常用功能介绍</a>、<a href="#log-perfetto32">Trace数据查看</a>、<a href="#log-perfetto33">整体性能分析与优化技巧</a>3部分进行介绍。
+
+<div id="log-perfetto31" style="line-height: 190%;"><span style="color: #cd8f4d;">&#10148;&nbsp;</span>常用功能介绍:Perfetto提供了查询、置顶、标记等功能，支持快捷键，W : 放大 perfetto , 放大可以更好地看清局部细节；S : 缩小 perfetto, 缩小以查看整体；A : 左移；D : 右移；M : 高亮选中当前鼠标点击的段。
+<br>&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #cd8f4d;">&#10022;</span>查询功能支持对所有呈现出来的trace片段名称进行查询，包括默认的函数名称及自定义的trace名称。
+
+<p><img src="/images/java-perfetto-3.png"></p>
+<p><br>&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #cd8f4d;">&#10022;</span>置顶功能支持将一个或者多个进程或者线程置顶，方便多行联合分析。</p>
+<p><img src="/images/java-perfetto-1.png"></p>
+<p><br>&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #cd8f4d;">&#10022;</span>标记功能支持标记所有行的一个或者多个时间点，方便同一个进程或者线程在不同的时间线内的分析。</p>
+<p><img src="/images/java-perfetto-2.png"></p>
+</div>
+
+<div id="log-perfetto32" style="line-height: 190%;">
+<p><span style="color: #cd8f4d;">&#10148;&nbsp;</span>Trace数据查看:
+<br>&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #cd8f4d;">&#10022;</span> 每个线程会有2行信息，一行是线程运行状态，包含深绿色的Running、浅绿色的Runnable、无色的Sleeping、橙色的Uninterruptible Sleep (IO)以及紫红色的Uninterruptible Sleep (Non IO)5种状态，每种状态的trace块点击后可以查看相关的信息。
+<br>&nbsp;&nbsp;&nbsp;&nbsp;进程的另外一行信息就是线程中执行的代码块，通常需要对这部分内容进行分析。
+
+<p><img src="/images/java-perfetto-4.png"><br>&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #cd8f4d;">&#10022;</span>通过接口ATRACE_INT实现跟踪数值的变化，例如surfaceflinger的vsync。</p>
+<p><img src="/images/java-perfetto-5.png"><br>&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #cd8f4d;">&#10022;</span>cpu执行块部分主要有每个线程执行的任务块，和每个cpu的频率详情。</p>
+<p><img src="/images/java-perfetto-6.png"><br>&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #cd8f4d;">&#10022;</span>跨进程通信呈现了从客户端到服务端的调用关系及相关信息。</p>
+<p><img src="/images/java-perfetto-7.png"></p>
+</div>
+
+<div id="log-perfetto33" style="line-height: 190%;">
+<p><span style="color: #cd8f4d;">&#10148;&nbsp;</span>整体性能分析技巧： Perfetto提供了丰富的性能数据，但如何解读和分析这些数据是关键。以下是一些解读和分析性能数据的方法：
+<br>&nbsp;&nbsp;&nbsp;&nbsp;趋势分析： 对同一进程或者线程的不同时间点的性能数据进行对比，查看性能指标的变化趋势，以便发现异常情况。
+<br>&nbsp;&nbsp;&nbsp;&nbsp;数据分析： 将性能数据聚合，计算平均值、最大值、最小值等，以获得更全面的性能指标。查看性能指标数据中是否出现了异常的峰值，可能表示出现了性能瓶颈。观察CPU、内存、磁盘等资源利用情况的数据，是否出现了饱和现象。分析不同函数调用之间的时序关系，以发现因果关系和影响因素。
+</div>
+</div>
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://example.com/2022/04/28/framwork-debug-mode/" data-id="clvgls9xq000n24uzejd98a1w" data-title="Framework调试方式分析" "></a>
+      
+      
+      
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Framework/" rel="tag">Framework</a></li></ul>
+
+    </footer>
+  </div>
+  
+    
+  
+</article>
+
+
+</section>
+        
+          <aside id="sidebar">
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">分类</h3>
+    <div class="widget">
+      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/%E7%BC%96%E7%A8%8B/">编程</a><ul class="category-list-child"><li class="category-list-item"><a class="category-list-link" href="/categories/%E7%BC%96%E7%A8%8B/Android-Framework/">Android Framework</a></li></ul></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">标签</h3>
+    <div class="widget">
+      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/tags/Framework/" rel="tag">Framework</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">云标签</h3>
+    <div class="widget tagcloud">
+      <a href="/tags/Framework/" style="font-size: 10px;">Framework</a>
+    </div>
+  </div>
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">所有文章</h3>
+    <div class="widget">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/04/">四月 2022</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">最新文章</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/2022/04/28/framwork-debug-mode/">Framework调试方式分析</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      
+      &copy; 2024 Helen<br>
+      Powered by <a href="https://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">首页</a>
+  
+    <a href="/archives" class="mobile-nav-link">所有文章</a>
+  
+</nav>
+    
+
+
+<script src="/js/jquery-3.6.4.min.js"></script>
+
+
+
+  
+<script src="/fancybox/jquery.fancybox.min.js"></script>
+
+
+
+
+<script src="/js/script.js"></script>
+
+
+
+
+
+  </div>
+</body>
+</html>
