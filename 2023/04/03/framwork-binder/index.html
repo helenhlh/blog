@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  
+  <title>Binder机制浅析 | </title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta name="description" content="导读：Binder是Android系统中的一种IPC（进程间通信）机制，为系统4大组件提供了安全且高效的跨进程通信。下文将从Binder原理和Binder应用2个方面进行介绍。 Binder原理：从ServiceManager到进程间数据传递方式，对Binder跨进程通信原理进行介绍，了解Binder的优缺点，从而更好地使用Binder。 Binder应用：从Binder在Native层和Jav">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Binder机制浅析">
+<meta property="og:url" content="http://example.com/2023/04/03/framwork-binder/index.html">
+<meta property="og:site_name">
+<meta property="og:description" content="导读：Binder是Android系统中的一种IPC（进程间通信）机制，为系统4大组件提供了安全且高效的跨进程通信。下文将从Binder原理和Binder应用2个方面进行介绍。 Binder原理：从ServiceManager到进程间数据传递方式，对Binder跨进程通信原理进行介绍，了解Binder的优缺点，从而更好地使用Binder。 Binder应用：从Binder在Native层和Jav">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://example.com/images/binder-2.png">
+<meta property="og:image" content="http://example.com/images/binder-3.png">
+<meta property="og:image" content="http://example.com/images/binder-1.png">
+<meta property="og:image" content="http://example.com/images/binder-4.png">
+<meta property="article:published_time" content="2023-04-02T16:00:00.000Z">
+<meta property="article:modified_time" content="2024-05-11T01:39:07.070Z">
+<meta property="article:author" content="Helen">
+<meta property="article:tag" content="Framework">
+<meta property="article:tag" content="binder">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://example.com/images/binder-2.png">
+  
+  
+    <link rel="shortcut icon" href="/favicon.png">
+  
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+    
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.min.css">
+
+  
+  
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fork-awesome@1.2.0/css/fork-awesome.min.css">
+
+<meta name="generator" content="Hexo 7.2.0"></head>
+
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo"></a>
+      </h1>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"><span class="fa fa-bars"></span></a>
+        
+          <a class="main-nav-link" href="/">首页</a>
+        
+          <a class="main-nav-link" href="/archives">所有文章</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+        
+        <a class="nav-icon nav-search-btn" title="搜索"><span class="fa fa-search"></span></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="搜索"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="http://example.com"></form>
+      </div>
+    </div>
+  </div>
+</header>
+
+      <div class="outer">
+        <section id="main"><article id="post-framwork-binder" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
+  <div class="article-meta">
+    <a href="/2023/04/03/framwork-binder/" class="article-date">
+  <time class="dt-published" datetime="2023-04-02T16:00:00.000Z" itemprop="datePublished">2023-04-03</time>
+</a>
+    
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/%E7%BC%96%E7%A8%8B/">编程</a>►<a class="article-category-link" href="/categories/%E7%BC%96%E7%A8%8B/Android-Framework/">Android Framework</a>
+  </div>
+
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="p-name article-title" itemprop="headline name">
+      Binder机制浅析
+    </h1>
+  
+
+      </header>
+    
+    <div class="e-content article-entry" itemprop="articleBody">
+      
+        <div style="background-color: #ecf3fa;padding: 15px;border-radius: 6px;margin-bottom:10px;margin-top:10px;line-height: 190%;">
+<span style="font-weight: bold;">导读：</span>Binder是Android系统中的一种IPC（进程间通信）机制，为系统4大组件提供了安全且高效的跨进程通信。下文将从<a href="#idedebug">Binder原理</a>和<a href="#logdebug">Binder应用</a>2个方面进行介绍。
+<br><span style="font-weight: bold;">Binder原理：</span>从ServiceManager到进程间数据传递方式，对Binder跨进程通信原理进行介绍，了解Binder的优缺点，从而更好地使用Binder。
+<br><span style="font-weight: bold;">Binder应用：</span>从Binder在Native层和Java层的接口调用方式，对Binder在APP之间，APP与Java服务或者Native服务间的通信应用有一个基本的了解。
+</div>
+ <span id="more"></span>
+
+<div id="idedebug" style="font-weight: bold;text-align: center;font-size: 22px;margin-bottom:10px;">Binder原理
+</div>
+
+<div style="line-height: 190%;text-indent: 2em;">
+Android系统中会为每个进程分配一定大小的虚拟地址空间，通常32位是4GB，64位分配的大小与CONFIG_ARM64_VA_BITS，下文都是基于32位的4GB来介绍的。这4GB的虚拟地址空间，有3GB为用户空间，1GB为内核空间。每个进程用户空间是互相隔离的，无法直接互相访问；而内核空间是所有系统进程共享的，所有的进程都可以访问。Binder机制中就是利用系统进程共享的内核空间来实现进程间通信的。
+</div>
+
+<p><img src="/images/binder-2.png"></p>
+<div style="line-height: 190%;text-indent: 2em;">
+misc类型的Binder驱动运行于内核中，不涉及硬件操作，但可以读写内核空间，基于内核空间可以被进程间共享，Binder成为不同进程间的桥梁，进而实现跨进程通信。Binder驱动被挂载在文件系统dev目录/dev/binder下，注册驱动时将open、mmap、ioctl等系统调用注册到Binder的函数中，这样用户空间就可以通过系统接口调用从用户态切换到内核态，进而对内核空间进程操作。
+<p>相对于管道、消息队列、共享内存、信号量和信号、socket等进程间通信方式来说，Binder最大的优势是性能高效，在数据传递的过程只进行1次数据拷贝，从数据发起端的应用进程的用户空间拷贝到内核空间。Binder通信的过程中，单次传输的数据不能超过4M，而Zygote在创建APP进程时就限定了其传输数据大小为1M-8K，否则会抛出TransactionTooLargeException异常。
+<p>Binder是如何实现只进行1次数据拷贝的呢？
+<p>Binder驱动提供的mmap接口，可以内存申请并将物理地址映射到虚拟地址空间中，实现的逻辑如下图：
+
+<p><img src="/images/binder-3.png"></p>
+<p>Binder就是通过mmap的物理地址到虚拟地址空间的映射技术，实现了1次的数据拷贝。在Binder通信过程中，数据接收端调用mmap系统接口后，申请的数据缓存对应的物理地址会被同时映射到虚拟地址空间中的用户空间和内核空间，数据只需要从数据发起端的应用进程的用户空间拷贝到内核空间中，这样数据接收端的用户空间就能直接读取被传递的数据。
+Binder采用了客户端-服务器（Client-Server，简称 C/S）架构，客户端进程持有服务端的远程代理对象IBinder，从而对象实现了从客户端进程调用到服务端进程的通信。
+
+<p>在深入学习Binder调用之前，我们脑海中肯定有个疑惑，Binder跨进程机制是通过服务端的远程代理对象IBinder，来实现客户端进程到服务端进程的调用，那客户端进程到底是怎么拿到IBinder对象的呢？
+<p>我们先来看一下Binder通信的流程图如下：
+
+<p><img src="/images/binder-1.png"></p>
+<p>从上面的流程图中，我们可以看到，所有的客户端进程，都必须调用IServiceManager的getService方法，才能拿到IBinder对象。
+<p>IServiceManager是servicemanager进程的远程代理对象，servicemanager本身就是Binder跨进程通信，是Binder跨进程通信的基础，维护了那些调用addService方法注册的服务端与服务名的映射，并提供getService方法让客户端可以获得服务端的远程代理对象IBinder。
+<p>下面是IServiceManager.cpp中getService方法代码，与servicemanager进程通信获取目标服务端的handle，并生成IBinder对象的代码。
+<figure class="highlight plaintext"><figcaption><span>IServiceManager.cpp</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">virtual sp&lt;IBinder&gt; checkService( const String16&amp; name) const</span><br><span class="line">&#123;</span><br><span class="line">    Parcel data, reply;</span><br><span class="line">    data.writeInterfaceToken(IServiceManager::getInterfaceDescriptor());</span><br><span class="line">    data.writeString16(name);</span><br><span class="line">    remote()-&gt;transact(CHECK_SERVICE_TRANSACTION, data, &amp;reply);</span><br><span class="line">    return reply.readStrongBinder();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>经过代码跟踪后，可以发现reply.readStrongBinder()实际是根据servicemanager进程返回的目标服务端的handle生成了BpBinder。备注：BpBinder继承了IBinder。
+<figure class="highlight plaintext"><figcaption><span>Parcel.cpp 的unflatten_binder方法中的代码片段</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">case BINDER_TYPE_HANDLE:</span><br><span class="line">case BINDER_TYPE_WEAK_HANDLE:</span><br><span class="line">    *out = proc-&gt;getWeakProxyForHandle(flat-&gt;handle);</span><br><span class="line">    return finish_unflatten_binder(</span><br><span class="line">    static_cast&lt;BpBinder*&gt;(out-&gt;unsafe_get()), *flat, in);</span><br></pre></td></tr></table></figure>
+<p>从上面2个代码片段可以看出handle在Binder跨进程通信中的重要性，handle是Binder驱动为每个服务端binder主线程创建binder_proc时生成的一个计数器，servicemanager外的服务端handle从1开始自增1，servicemanager的handle默认为0。
+
+<p>Binder跨进程通信过程中涉及的主要类如下图：
+
+<p><img src="/images/binder-4.png"></p>
+</div>
+<div id="logdebug" style="font-weight: bold;text-align: center;font-size: 22px;margin-bottom:10px;">Binder应用
+</div>
+<div style="line-height: 190%;text-indent: 2em;">
+<p>Binder跨进程通信广泛地应用在 Activity、Service、BroadcastReceiver 和 ContentProvider这四大组件之间的通信和数据传递。
+<p>从上面的IServiceManager.cpp的源码中可以看到，要实现Binder跨进程通信，客户端和服务端要协商好业务关注的code，客户端需要把待传输数据打包成Parcel格式，服务端需要对code和Parcel数据进行解析并实现相关业务逻辑。为了提高开发效率，减少重复的编码，用于Binder跨通信接口的AIDL应运而生。经过几个版本演进，最新的AIDL已经适应于HAL的开发，在HAL中的应用需要给客户端添加访问权限。下文将探讨AIDL如何生成 <a href="#aidl_c++">C++ 代码</a>和<a href="#aidl_java">JAVA代码</a>，并对<a href="#aidl_messenger">Messenger</a>进行介绍。
+
+<div id = "#aidl_c++" style="line-height: 190%;text-indent: 2em;">
+<p>AIDL中定义了一些关键用于修饰参数和方法：
+<p>&nbsp;&nbsp;in、out、inout，这些关键字用于修饰方法的参数。in由客户端流向服务端，服务端的修改不会影响客户端的对象。out由服务端流向客户端，服务端收到的参数是空对象，并且服务端修改对象后客户端会同步变动。inout在服务端与客户端之间双向流通，服务端能接收到客户端传来的完整对象，并且服务端修改对象后客户端会同步变动。
+<p>&nbsp;&nbsp;oneway，这个修饰了的方法不可以有返回值，也不可以有带out或inout的参数。使用oneway时，客户端进程的Binder底层在发送事务数据后立即返回，不等待服务端执行完该方法。oneway修饰的方法可以使用的内存在500K左右，如果在短时间内被非常频繁地调用，可能会在远程服务方法未执行完成的情况下，Binder驱动一直往执行队列中缓存，耗尽500K的内存，导致无法再申请内存而报出异常。因此调用oneway修饰的方法要注意控制访问的频率，防止出现transaction failed的异常。
+<p><span style="font-weight: bold;">1、AIDL生成 C++ 代码：</span>包括定义AIDL接口，生成C++接口文件，实现服务端接口，注册服务，编译服务及启动和使用服务6个步骤。
+</div>
+<div style="line-height: 190%;text-indent: 2em;">
+<p>&nbsp;&nbsp;<span style="color: #cd8f4d;">&#10148;&nbsp;</span><span style="font-weight: bold;">定义AIDL接口：</span>创建一个工程目录/aidl/com/example/，定义一个 AIDL 文件来描述要暴露给其他进程的接口。
+<figure class="highlight plaintext"><figcaption><span>生成IDeviceService.aidl文件</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">package com.example;</span><br><span class="line">interface IDeviceService &#123;</span><br><span class="line">    void doSomething();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>&nbsp;&nbsp;<span style="color: #cd8f4d;">&#10148;&nbsp;</span><span style="font-weight: bold;">生成C++接口文件：</span>使用 AIDL 工具生成 C++ 接口文件。如果是生成C++[ndk]，可以使用Android Studio 安装的 Android SDKAIDL 工具，通常位于 build-tools 目录下，例如：~/.Android/Sdk/build-tools/32.0.0/aidl。如果是生成C++[android]，可以用源码中的 AIDL 工具，目录则如下：out/soong/host/linux-x86/bin/aidl。执行aidl命令后，会在/cpp_android/com/example目录下生成4个文件，BnDeviceService.h、BpDeviceService.h、IDeviceService.h、IDeviceService.cpp。
+<figure class="highlight plaintext"><figcaption><span>在源码根目录下创建aidl文件夹，cd到aidl目录下，执行aidl命令</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">aidl -I ./aidl -h ./cpp_android/ -o ../cpp_android --lang=cpp ./aidl/com/example/IDeviceService.aidl</span><br></pre></td></tr></table></figure>
+
+<p>&nbsp;&nbsp;<span style="color: #cd8f4d;">&#10148;&nbsp;</span><span style="font-weight: bold;">实现服务端接口：</span>创建一个 C++ 类，继承步骤2 AIDL 生成的 BnDeviceService 类，实现 AIDL 文件中定义的所有方法。
+<figure class="highlight plaintext"><figcaption><span>MyDeviceService.cpp</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">#include &quot;BnDeviceService.h&quot;</span><br><span class="line"></span><br><span class="line">using namespace com::example;</span><br><span class="line"></span><br><span class="line">class MyDeviceService : public BnDeviceService &#123;</span><br><span class="line">public:</span><br><span class="line">    binder::Status doSomething() override &#123;</span><br><span class="line">        // 实现你的逻辑</span><br><span class="line">        return binder::Status::ok();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<p>&nbsp;&nbsp;<span style="color: #cd8f4d;">&#10148;&nbsp;</span><span style="font-weight: bold;">注册服务：</span>在服务的主函数中，使用 android::addService() 函数注册你的服务。
+<figure class="highlight plaintext"><figcaption><span>deviceservice_main.cpp</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">#include &lt;binder/IPCThreadState.h&gt;</span><br><span class="line">#include &lt;binder/ProcessState.h&gt;</span><br><span class="line">#include &lt;utils/String16.h&gt;</span><br><span class="line"></span><br><span class="line">int main(int argc, char** argv) &#123;</span><br><span class="line">    android::sp&lt;android::ProcessState&gt; proc(android::ProcessState::self());</span><br><span class="line">    android::sp&lt;android::IServiceManager&gt; sm = android::defaultServiceManager();</span><br><span class="line">    sm-&gt;addService(String16(&quot;MyDeviceService&quot;), new MyDeviceService());</span><br><span class="line">    android::ProcessState::self()-&gt;startThreadPool();</span><br><span class="line">    android::IPCThreadState::self()-&gt;joinThreadPool();</span><br><span class="line">    return 0;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>&nbsp;&nbsp;<span style="color: #cd8f4d;">&#10148;&nbsp;</span><span style="font-weight: bold;">编译服务：</span>为项目编写Android.bp文件，把上述步骤生成的项目代码集成到 Android 系统的构建系统中，确保包含所有必要的依赖项和头文件，然后编译成一个可执行文件。
+
+<p>&nbsp;&nbsp;<span style="color: #cd8f4d;">&#10148;&nbsp;</span><span style="font-weight: bold;">启动和使用服务：</span>在系统启动时或按需启动服务，并允许其他进程通过获取服务的 IBinder 对象来与之通信。客户端服务通过调用和编译IDeviceService.h、IDeviceService.cpp2个文件，可以实现对服务端进行调用。
+
+</div>
+
+<div id = "#aidl_java" style="line-height: 190%;text-indent: 2em;">
+<span style="font-weight: bold;">2、AIDL生成 Java 代码：</span>包括定义AIDL接口，生成Java接口文件，实现服务端接口，绑定服务，编译应用及远程调用服务6个步骤。
+</div>
+<div style="line-height: 190%;text-indent: 2em;">
+<p>&nbsp;&nbsp;<span style="color: #cd8f4d;">&#10148;&nbsp;</span><span style="font-weight: bold;">定义AIDL接口：</span>在Android Studio中创建一个工程，在/app/src/main目录下，创建一个目录/aidl/com/example/，定义一个 AIDL 文件来描述要暴露给其他进程的接口。
+<figure class="highlight plaintext"><figcaption><span>生成IDeviceService.aidl文件</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">package com.example;</span><br><span class="line">interface IDeviceService &#123;</span><br><span class="line">    void doSomething();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>&nbsp;&nbsp;<span style="color: #cd8f4d;">&#10148;&nbsp;</span><span style="font-weight: bold;">生成Java接口文件：</span>在 AIDL 文件被创建后，Android Studio 会自动调用 AIDL 工具来生成 Java 接口代码（Stub）。在app\build\generated\aidl_source_output_dir\debug\out\com\example目录下，会生成IDeviceService.java，包含了服务端需要实现的 Stub 类和客户端使用的代理类Stub.Proxy。
+
+<p>&nbsp;&nbsp;<span style="color: #cd8f4d;">&#10148;&nbsp;</span><span style="font-weight: bold;">实现服务端接口：</span>创建一个继承自 Service 的 DeviceService 类，并在 onBind() 方法中返回 AIDL 接口的 Binder 对象。在 AndroidManifest.xml 文件中声明你的服务，<service android:name=".DeviceService" />
+<figure class="highlight plaintext"><figcaption><span>DeviceService.java</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line">package com.example;</span><br><span class="line"></span><br><span class="line">import android.app.Service;</span><br><span class="line">import android.content.Intent;</span><br><span class="line">import android.os.IBinder;</span><br><span class="line">import android.os.RemoteException;</span><br><span class="line"></span><br><span class="line">public class DeviceService extends Service &#123;</span><br><span class="line">    private final 生成IDeviceService.Stub binder = new 生成IDeviceService.Stub() &#123;</span><br><span class="line">        @Override</span><br><span class="line">        public void doSomething() throws RemoteException &#123;</span><br><span class="line">            // 实现方法</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;;</span><br><span class="line"></span><br><span class="line">    @Override</span><br><span class="line">    public IBinder onBind(Intent intent) &#123;</span><br><span class="line">        return binder;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>&nbsp;&nbsp;<span style="color: #cd8f4d;">&#10148;&nbsp;</span><span style="font-weight: bold;">绑定服务：</span>在客户端代码中，使用 bindService() 方法绑定到步骤3生成的服务。
+<figure class="highlight plaintext"><figcaption><span>ExampleActivity.java</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br></pre></td><td class="code"><pre><span class="line">package com.example.myapp;</span><br><span class="line"></span><br><span class="line">import android.content.ComponentName;</span><br><span class="line">import android.content.Context;</span><br><span class="line">import android.content.Intent;</span><br><span class="line">import android.content.ServiceConnection;</span><br><span class="line">import android.os.Bundle;</span><br><span class="line">import android.os.IBinder;</span><br><span class="line">import android.widget.Toast;</span><br><span class="line"></span><br><span class="line">public class ExampleActivity extends AppCompatActivity &#123;</span><br><span class="line">    private ExampleServiceConnection connection;</span><br><span class="line"></span><br><span class="line">    @Override</span><br><span class="line">    protected void onCreate(Bundle savedInstanceState) &#123;</span><br><span class="line">        super.onCreate(savedInstanceState);</span><br><span class="line">        setContentView(R.layout.activity_example);</span><br><span class="line"></span><br><span class="line">        connection = new ExampleServiceConnection();</span><br><span class="line">        Intent intent = new Intent(this, ExampleService.class);</span><br><span class="line">        if (bindService(intent, connection, Context.BIND_AUTO_CREATE)) &#123;</span><br><span class="line">            Toast.makeText(this, &quot;Service is bound&quot;, Toast.LENGTH_SHORT).show();</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    private class ExampleServiceConnection implements ServiceConnection &#123;</span><br><span class="line">        @Override</span><br><span class="line">        public void onServiceConnected(ComponentName name, IBinder service) &#123;</span><br><span class="line">            // 绑定成功，service 参数是一个 IBinder 对象，通过它可以获取服务的接口</span><br><span class="line">            IDeviceService exampleService = IDeviceService.Stub.asInterface(service);</span><br><span class="line">            try &#123;</span><br><span class="line">                IDeviceService.doSomething();</span><br><span class="line">            &#125; catch (RemoteException e) &#123;</span><br><span class="line">                e.printStackTrace();</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        @Override</span><br><span class="line">        public void onServiceDisconnected(ComponentName name) &#123;</span><br><span class="line">            // 服务连接断开</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>&nbsp;&nbsp;<span style="color: #cd8f4d;">&#10148;&nbsp;</span><span style="font-weight: bold;">编译应用：</span>编写gradle，编译客户端应用和服务端应用。
+
+<p>&nbsp;&nbsp;<span style="color: #cd8f4d;">&#10148;&nbsp;</span><span style="font-weight: bold;">远程调用服务：</span>安装应用到设备中，先启动服务端应用，再启动客户端应用，进行远程调用服务。
+
+</div>
+<div id = "#aidl_messenger" style="line-height: 190%;text-indent: 2em;">
+<span style="font-weight: bold;">3、Messenger：</span>Messenger是基于AIDL实现的轻量级IPC方案，Framework层根据AIDL的规则封装出了Messenger。相对于传统的AIDL实现方式来说，Messenger实现起来更加方便快捷。
+</div>
+<div style="line-height: 190%;text-indent: 2em;">
+<p>&nbsp;&nbsp;<span style="color: #cd8f4d;">&#10148;&nbsp;</span><span style="font-weight: bold;">服务端实现Messenger：</span>创建一个继承自 Service 的 DeviceService 类，创建Handler对象，用来处理客户端的请求。并在 onBind() 方法中返回Messenger的IBinder对象。
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">Handler messengerHandler = new Handler() &#123;</span><br><span class="line">       @Override</span><br><span class="line">       public void handleMessage(@NonNull Message msg) &#123;</span><br><span class="line">           switch (msg.what) &#123;</span><br><span class="line">               case  1:</span><br><span class="line">                  // 处理客户端的请求;</span><br><span class="line">                   break;</span><br><span class="line">           &#125;</span><br><span class="line">           super.handleMessage(msg);</span><br><span class="line">       &#125;</span><br><span class="line">   &#125;;</span><br></pre></td></tr></table></figure>
+<p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">public IBinder onBind(Intent intent) &#123;</span><br><span class="line">    return messenger.getBinder();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>&nbsp;&nbsp;<span style="color: #cd8f4d;">&#10148;&nbsp;</span><span style="font-weight: bold;">客户端使用Messenger：</span>客户端通过bindService绑定服务，在ServiceConnection类的onServiceConnected获取到服务端的返回的Messenger代理类,然后就可以通过send函数发送Message数据。
+
+<figure class="highlight plaintext"><figcaption><span>ExampleActivity.java</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br></pre></td><td class="code"><pre><span class="line">package com.example.myapp;</span><br><span class="line"></span><br><span class="line">import android.content.ComponentName;</span><br><span class="line">import android.content.Context;</span><br><span class="line">import android.content.Intent;</span><br><span class="line">import android.content.ServiceConnection;</span><br><span class="line">import android.os.Bundle;</span><br><span class="line">import android.os.IBinder;</span><br><span class="line">import android.widget.Toast;</span><br><span class="line"></span><br><span class="line">public class ExampleActivity extends AppCompatActivity &#123;</span><br><span class="line">    private ExampleServiceConnection connection;</span><br><span class="line"></span><br><span class="line">    @Override</span><br><span class="line">    protected void onCreate(Bundle savedInstanceState) &#123;</span><br><span class="line">        super.onCreate(savedInstanceState);</span><br><span class="line">        setContentView(R.layout.activity_example);</span><br><span class="line"></span><br><span class="line">        connection = new ExampleServiceConnection();</span><br><span class="line">        Intent intent = new Intent(this, ExampleService.class);</span><br><span class="line">        if (bindService(intent, connection, Context.BIND_AUTO_CREATE)) &#123;</span><br><span class="line">            Toast.makeText(this, &quot;Service is bound&quot;, Toast.LENGTH_SHORT).show();</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    private class ExampleServiceConnection implements ServiceConnection &#123;</span><br><span class="line">        @Override</span><br><span class="line">        public void onServiceConnected(ComponentName name, IBinder service) &#123;</span><br><span class="line">            // 绑定成功，service 参数是一个Messenger代理对象 IBinder </span><br><span class="line">            IDeviceService exampleService = IDeviceService.Stub.asInterface(service);</span><br><span class="line">            Messenger messengerServer = new Messenger(service);</span><br><span class="line"></span><br><span class="line">            Message toServer = Message.obtain();</span><br><span class="line">            toServer.replyTo = messengerClientSend;</span><br><span class="line">            toServer.what = 1;</span><br><span class="line">            Bundle bundle = new Bundle();</span><br><span class="line">            bundle.putString(&quot;bundleKey&quot;,&quot;bundleValue Client&quot;);</span><br><span class="line">            toServer.setData(bundle);</span><br><span class="line">            messengerServer.send(toServer);</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        @Override</span><br><span class="line">        public void onServiceDisconnected(ComponentName name) &#123;</span><br><span class="line">            // 服务连接断开</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>从上图我们可以看出相对于AIDL来说，Messenger使用更加快捷简便，不需要定义AIDL接口，不需要实现接口。但是这种便捷有一定的局限性，Messager 方式是利用 Handler 形式处理，因此它是线程安全的，这也表示它不支持并发处理；而 AIDL 方式是非线程安全的，支持并发处理，因此，我们使用 AIDL 方式时需要保证代码的线程安全。
+<p>另外 Messenger 没有办法传输 IBinder，没法建立客户端和服务端的双向通信。而 AIDL 方式，可以传输IBinder，在已经建立 Binder 通信的基础上，可以通过接口将客户端实现的服务的远程代理对象IBinder传输给服务端，进而建立从服务端到客户端的 Binder 跨进程通信。
+<p>因此，在实际使用 Binder 的过程中可以根据实际的需求去判断，是选择灵活性更高的AIDL，还是选择便捷性更高的Messenger。
+
+</div>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://example.com/2023/04/03/framwork-binder/" data-id="clvrr1vlt000068uz79s1dn0m" data-title="Binder机制浅析" "></a>
+      
+      
+      
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Framework/" rel="tag">Framework</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/binder/" rel="tag">binder</a></li></ul>
+
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+    <a href="/2023/06/12/framwork-handler/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">前一篇</strong>
+      <div class="article-nav-title">
+        
+          Handler浅析
+        
+      </div>
+    </a>
+  
+  
+    <a href="/2023/02/28/framwork-debug-mode/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">后一篇</strong>
+      <div class="article-nav-title">Framework调试方式总结</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+
+</section>
+        
+          <aside id="sidebar">
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">分类</h3>
+    <div class="widget">
+      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/%E7%BC%96%E7%A8%8B/">编程</a><ul class="category-list-child"><li class="category-list-item"><a class="category-list-link" href="/categories/%E7%BC%96%E7%A8%8B/Android-Framework/">Android Framework</a></li></ul></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">标签</h3>
+    <div class="widget">
+      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/tags/Framework/" rel="tag">Framework</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/binder/" rel="tag">binder</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/handler/" rel="tag">handler</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E8%B0%83%E8%AF%95/" rel="tag">调试</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">云标签</h3>
+    <div class="widget tagcloud">
+      <a href="/tags/Framework/" style="font-size: 20px;">Framework</a> <a href="/tags/binder/" style="font-size: 10px;">binder</a> <a href="/tags/handler/" style="font-size: 10px;">handler</a> <a href="/tags/%E8%B0%83%E8%AF%95/" style="font-size: 10px;">调试</a>
+    </div>
+  </div>
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">所有文章</h3>
+    <div class="widget">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/06/">六月 2023</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/04/">四月 2023</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/02/">二月 2023</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">最新文章</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/2023/06/12/framwork-handler/">Handler浅析</a>
+          </li>
+        
+          <li>
+            <a href="/2023/04/03/framwork-binder/">Binder机制浅析</a>
+          </li>
+        
+          <li>
+            <a href="/2023/02/28/framwork-debug-mode/">Framework调试方式总结</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      
+      &copy; 2024 Helen<br>
+      Powered by <a href="https://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">首页</a>
+  
+    <a href="/archives" class="mobile-nav-link">所有文章</a>
+  
+</nav>
+    
+
+
+<script src="/js/jquery-3.6.4.min.js"></script>
+
+
+
+  
+<script src="/fancybox/jquery.fancybox.min.js"></script>
+
+
+
+
+<script src="/js/script.js"></script>
+
+
+
+
+
+  </div>
+</body>
+</html>
