@@ -85,7 +85,7 @@
         
   
     <h1 itemprop="name">
-      <a class="p-name article-title" href="/2023/06/12/framwork-handler/">Handler浅析</a>
+      <a class="p-name article-title" href="/2023/06/12/framwork-handler/">Handler消息机制浅析</a>
     </h1>
   
 
@@ -94,9 +94,9 @@
     <div class="e-content article-entry" itemprop="articleBody">
       
         <div style="background-color: #ecf3fa;padding: 15px;border-radius: 6px;margin-bottom:10px;margin-top:10px;line-height: 190%;">
-<span style="font-weight: bold;">导读：</span>Handler是Android系统中APP线程间通信的机制，。下文将从<a href="#idedebug">Binder原理</a>和<a href="#logdebug">Binder应用</a>2个方面进行介绍。
-<br><span style="font-weight: bold;">Binder原理：</span>从ServiceManager到进程间数据传递方式，对Binder跨进程通信原理进行介绍，了解Binder的优缺点，从而更好地使用Binder。
-<br><span style="font-weight: bold;">Binder应用：</span>从Binder在Native层和Java层的接口调用方式，对Binder在APP之间，APP与Java服务或者Native服务间的通信应用有一个基本的了解。
+<span style="font-weight: bold;">导读：</span>Handler是Android系统中进程内的线程间通信的消息机制，子线程通过Looper线程创建的Handler对象，向休眠中的Looper线程发送消息进行唤醒，实现线程间通信。下文将从<a href="#idedebug">Handler原理</a>和<a href="#logdebug">Handler应用</a>2个方面进行介绍。
+<br><span style="font-weight: bold;">Handler原理：</span>从Handler底层原理，到APP的UI主线程的Looper调用流程，对Handler消息机制有一个大致的了解。
+<br><span style="font-weight: bold;">Handler应用：</span>从Handler的handleMessage方法重写，到Message的传输，对Handler消息机制的应用有一个大致的了解。
 </div>
         
           <p class="article-more-link">
@@ -106,7 +106,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="http://example.com/2023/06/12/framwork-handler/" data-id="clw1gau5x0000nsuz4cro2bjq" data-title="Handler浅析" "></a>
+      <a data-url="http://example.com/2023/06/12/framwork-handler/" data-id="clw1gau5x0000nsuz4cro2bjq" data-title="Handler消息机制浅析" "></a>
       
       
       
@@ -138,7 +138,7 @@
         
   
     <h1 itemprop="name">
-      <a class="p-name article-title" href="/2023/04/03/framwork-binder/">Binder机制浅析</a>
+      <a class="p-name article-title" href="/2023/04/03/framwork-binder/">Binder跨进程通信机制浅析</a>
     </h1>
   
 
@@ -159,7 +159,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="http://example.com/2023/04/03/framwork-binder/" data-id="clvrr1vlt000068uz79s1dn0m" data-title="Binder机制浅析" "></a>
+      <a data-url="http://example.com/2023/04/03/framwork-binder/" data-id="clvrr1vlt000068uz79s1dn0m" data-title="Binder跨进程通信机制浅析" "></a>
       
       
       
@@ -280,11 +280,11 @@
       <ul>
         
           <li>
-            <a href="/2023/06/12/framwork-handler/">Handler浅析</a>
+            <a href="/2023/06/12/framwork-handler/">Handler消息机制浅析</a>
           </li>
         
           <li>
-            <a href="/2023/04/03/framwork-binder/">Binder机制浅析</a>
+            <a href="/2023/04/03/framwork-binder/">Binder跨进程通信机制浅析</a>
           </li>
         
           <li>
