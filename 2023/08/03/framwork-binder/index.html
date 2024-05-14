@@ -9,7 +9,7 @@
   <meta name="description" content="导读：Binder是Android系统中的一种IPC（进程间通信）机制，为系统4大组件提供了安全且高效的跨进程通信。下文将从Binder原理和Binder应用2个方面进行介绍。 Binder原理：从ServiceManager到进程间数据传递方式，对Binder跨进程通信原理进行介绍，了解Binder的优缺点，从而更好地使用Binder。 Binder应用：从Binder在Native层和Jav">
 <meta property="og:type" content="article">
 <meta property="og:title" content="Binder跨进程通信机制浅析">
-<meta property="og:url" content="http://example.com/2023/04/03/framwork-binder/index.html">
+<meta property="og:url" content="http://example.com/2023/08/03/framwork-binder/index.html">
 <meta property="og:site_name">
 <meta property="og:description" content="导读：Binder是Android系统中的一种IPC（进程间通信）机制，为系统4大组件提供了安全且高效的跨进程通信。下文将从Binder原理和Binder应用2个方面进行介绍。 Binder原理：从ServiceManager到进程间数据传递方式，对Binder跨进程通信原理进行介绍，了解Binder的优缺点，从而更好地使用Binder。 Binder应用：从Binder在Native层和Jav">
 <meta property="og:locale" content="zh_CN">
@@ -17,8 +17,8 @@
 <meta property="og:image" content="http://example.com/images/binder-3.png">
 <meta property="og:image" content="http://example.com/images/binder-1.jpg">
 <meta property="og:image" content="http://example.com/images/binder-4.png">
-<meta property="article:published_time" content="2023-04-02T16:00:00.000Z">
-<meta property="article:modified_time" content="2024-05-11T15:53:45.200Z">
+<meta property="article:published_time" content="2023-08-02T16:00:00.000Z">
+<meta property="article:modified_time" content="2024-05-14T02:43:43.159Z">
 <meta property="article:author" content="Helen">
 <meta property="article:tag" content="Framework">
 <meta property="article:tag" content="binder">
@@ -78,8 +78,8 @@
       <div class="outer">
         <section id="main"><article id="post-framwork-binder" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
   <div class="article-meta">
-    <a href="/2023/04/03/framwork-binder/" class="article-date">
-  <time class="dt-published" datetime="2023-04-02T16:00:00.000Z" itemprop="datePublished">2023-04-03</time>
+    <a href="/2023/08/03/framwork-binder/" class="article-date">
+  <time class="dt-published" datetime="2023-08-02T16:00:00.000Z" itemprop="datePublished">2023-08-03</time>
 </a>
     
   <div class="article-category">
@@ -215,7 +215,7 @@ misc类型的Binder驱动运行于内核中，不涉及硬件操作，但可以�
       
     </div>
     <footer class="article-footer">
-      <a data-url="http://example.com/2023/04/03/framwork-binder/" data-id="clvrr1vlt000068uz79s1dn0m" data-title="Binder跨进程通信机制浅析" "></a>
+      <a data-url="http://example.com/2023/08/03/framwork-binder/" data-id="clvrr1vlt000068uz79s1dn0m" data-title="Binder跨进程通信机制浅析" "></a>
       
       
       
@@ -227,19 +227,19 @@ misc类型的Binder驱动运行于内核中，不涉及硬件操作，但可以�
     
 <nav id="article-nav">
   
-    <a href="/2023/06/12/framwork-handler/" id="article-nav-newer" class="article-nav-link-wrap">
+    <a href="/2023/11/28/framwork-debug-mode/" id="article-nav-newer" class="article-nav-link-wrap">
       <strong class="article-nav-caption">前一篇</strong>
       <div class="article-nav-title">
         
-          Handler消息机制浅析
+          Framework调试方式总结
         
       </div>
     </a>
   
   
-    <a href="/2023/02/28/framwork-debug-mode/" id="article-nav-older" class="article-nav-link-wrap">
+    <a href="/2023/06/12/framwork-handler/" id="article-nav-older" class="article-nav-link-wrap">
       <strong class="article-nav-caption">后一篇</strong>
-      <div class="article-nav-title">Framework调试方式总结</div>
+      <div class="article-nav-title">Handler消息机制浅析</div>
     </a>
   
 </nav>
@@ -285,7 +285,7 @@ misc类型的Binder驱动运行于内核中，不涉及硬件操作，但可以�
   <div class="widget-wrap">
     <h3 class="widget-title">所有文章</h3>
     <div class="widget">
-      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/06/">六月 2023</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/04/">四月 2023</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/02/">二月 2023</a></li></ul>
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/11/">十一月 2023</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/08/">八月 2023</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/06/">六月 2023</a></li></ul>
     </div>
   </div>
 
@@ -298,15 +298,15 @@ misc类型的Binder驱动运行于内核中，不涉及硬件操作，但可以�
       <ul>
         
           <li>
+            <a href="/2023/11/28/framwork-debug-mode/">Framework调试方式总结</a>
+          </li>
+        
+          <li>
+            <a href="/2023/08/03/framwork-binder/">Binder跨进程通信机制浅析</a>
+          </li>
+        
+          <li>
             <a href="/2023/06/12/framwork-handler/">Handler消息机制浅析</a>
-          </li>
-        
-          <li>
-            <a href="/2023/04/03/framwork-binder/">Binder跨进程通信机制浅析</a>
-          </li>
-        
-          <li>
-            <a href="/2023/02/28/framwork-debug-mode/">Framework调试方式总结</a>
           </li>
         
       </ul>
